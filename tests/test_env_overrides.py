@@ -13,6 +13,9 @@ def _reload_with_env(monkeypatch, **overrides):
     """Set/clear env vars then reload default_config to re-evaluate DEFAULT_CONFIG."""
     for key in list(default_config_module._ENV_OVERRIDES):
         monkeypatch.delenv(key, raising=False)
+    for key in default_config_module._DATA_VENDOR_ENV:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv(default_config_module._DATA_VENDOR_DEFAULT_ENV, raising=False)
     for key, val in overrides.items():
         monkeypatch.setenv(key, val)
     return importlib.reload(default_config_module)
@@ -127,3 +130,44 @@ def test_unknown_env_var_is_ignored(monkeypatch):
         TRADINGAGENTS_NONEXISTENT_KEY="oops",
     )
     assert "nonexistent_key" not in dc.DEFAULT_CONFIG
+
+
+def test_data_vendor_default_override(monkeypatch):
+    dc = _reload_with_env(monkeypatch, TRADINGAGENTS_DATA_VENDOR_DEFAULT="alpha_vantage")
+    vendors = dc.DEFAULT_CONFIG["data_vendors"]
+    assert vendors["core_stock_apis"] == "alpha_vantage"
+    assert vendors["technical_indicators"] == "alpha_vantage"
+    assert vendors["fundamental_data"] == "alpha_vantage"
+    assert vendors["news_data"] == "alpha_vantage"
+    assert vendors["macro_data"] == "fred"
+    assert vendors["prediction_markets"] == "polymarket"
+
+
+def test_data_vendor_per_category_override(monkeypatch):
+    dc = _reload_with_env(
+        monkeypatch,
+        TRADINGAGENTS_DATA_VENDOR_DEFAULT="alpha_vantage",
+        TRADINGAGENTS_DATA_VENDOR_NEWS="yfinance",
+        TRADINGAGENTS_DATA_VENDOR_MACRO="fred",
+    )
+    vendors = dc.DEFAULT_CONFIG["data_vendors"]
+    assert vendors["core_stock_apis"] == "alpha_vantage"
+    assert vendors["news_data"] == "yfinance"
+    assert vendors["macro_data"] == "fred"
+
+
+def test_data_vendor_chain_value(monkeypatch):
+    dc = _reload_with_env(
+        monkeypatch,
+        TRADINGAGENTS_DATA_VENDOR_CORE_STOCK="alpha_vantage,yfinance",
+    )
+    assert dc.DEFAULT_CONFIG["data_vendors"]["core_stock_apis"] == "alpha_vantage,yfinance"
+
+
+def test_empty_data_vendor_env_is_passthrough(monkeypatch):
+    dc = _reload_with_env(
+        monkeypatch,
+        TRADINGAGENTS_DATA_VENDOR_DEFAULT="",
+        TRADINGAGENTS_DATA_VENDOR_NEWS="",
+    )
+    assert dc.DEFAULT_CONFIG["data_vendors"]["news_data"] == "yfinance"

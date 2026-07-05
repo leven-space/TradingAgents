@@ -287,6 +287,7 @@ def server_info() -> dict[str, Any]:
         "max_debate_rounds": config.get("max_debate_rounds"),
         "max_risk_discuss_rounds": config.get("max_risk_discuss_rounds"),
         "checkpoint_enabled": config.get("checkpoint_enabled"),
+        "data_vendors": dict(config.get("data_vendors", {})),
         "api_key_configured": api_configured,
         "api_key_env_var": api_env,
         "results_dir": str(results_dir()),

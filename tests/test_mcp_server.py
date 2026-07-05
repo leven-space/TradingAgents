@@ -105,3 +105,5 @@ def test_server_info_includes_tools():
     info = support.server_info()
     assert "analyze_stock" in info["tools"]
     assert info["transport"] == "streamable-http"
+    assert "data_vendors" in info
+    assert "core_stock_apis" in info["data_vendors"]

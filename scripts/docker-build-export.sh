@@ -6,7 +6,7 @@
 # 使用 Apple Container 时会自动经 skopeo 转换为 Docker 格式。
 #
 # 用法：
-#   ./scripts/docker-build-export.sh              # 默认 0.3.0 / linux/amd64
+#   ./scripts/docker-build-export.sh              # 默认 0.3.1 / linux/amd64
 #   ./scripts/docker-build-export.sh 0.3.0 linux/arm64
 #   PLATFORM=linux/amd64 ./scripts/docker-build-export.sh
 #
@@ -15,7 +15,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION="${1:-0.3.0}"
+VERSION="${1:-0.3.2}"
 PLATFORM="${2:-${PLATFORM:-linux/amd64}}"
 IMAGE="tradingagents:${VERSION}"
 SAFE_PLATFORM="${PLATFORM//\//-}"

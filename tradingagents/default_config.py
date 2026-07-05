@@ -26,6 +26,26 @@ _ENV_OVERRIDES = {
     "TRADINGAGENTS_ANTHROPIC_EFFORT":        "anthropic_effort",
 }
 
+# Per-category market-data vendor overrides (Docker / NAS / MCP — no code edits).
+# Values are vendor names or comma-separated fallback chains, e.g.
+# ``alpha_vantage`` or ``alpha_vantage,yfinance``. See data_vendors below.
+_DATA_VENDOR_ENV = {
+    "TRADINGAGENTS_DATA_VENDOR_CORE_STOCK": "core_stock_apis",
+    "TRADINGAGENTS_DATA_VENDOR_TECHNICAL": "technical_indicators",
+    "TRADINGAGENTS_DATA_VENDOR_FUNDAMENTAL": "fundamental_data",
+    "TRADINGAGENTS_DATA_VENDOR_NEWS": "news_data",
+    "TRADINGAGENTS_DATA_VENDOR_MACRO": "macro_data",
+    "TRADINGAGENTS_DATA_VENDOR_PREDICTION_MARKETS": "prediction_markets",
+}
+_DATA_VENDOR_DEFAULT_ENV = "TRADINGAGENTS_DATA_VENDOR_DEFAULT"
+# Bulk default applies to the four categories that ship as yfinance in code.
+_DATA_VENDOR_DEFAULT_CATEGORIES = (
+    "core_stock_apis",
+    "technical_indicators",
+    "fundamental_data",
+    "news_data",
+)
+
 
 _BOOL_TRUE = ("true", "1", "yes", "on")
 _BOOL_FALSE = ("false", "0", "no", "off")
@@ -67,7 +87,23 @@ def _apply_env_overrides(config: dict) -> dict:
     return config
 
 
-DEFAULT_CONFIG = _apply_env_overrides({
+def _apply_data_vendor_env_overrides(config: dict) -> dict:
+    """Apply TRADINGAGENTS_DATA_VENDOR_* env vars to data_vendors in-place."""
+    vendors = dict(config.get("data_vendors", {}))
+    bulk = os.environ.get(_DATA_VENDOR_DEFAULT_ENV, "").strip()
+    if bulk:
+        for key in _DATA_VENDOR_DEFAULT_CATEGORIES:
+            vendors[key] = bulk
+    for env_var, key in _DATA_VENDOR_ENV.items():
+        raw = os.environ.get(env_var)
+        if raw is None or raw.strip() == "":
+            continue
+        vendors[key] = raw.strip()
+    config["data_vendors"] = vendors
+    return config
+
+
+DEFAULT_CONFIG = _apply_env_overrides(_apply_data_vendor_env_overrides({
     "project_dir": os.path.abspath(os.path.join(os.path.dirname(__file__), ".")),
     "results_dir": os.getenv("TRADINGAGENTS_RESULTS_DIR", os.path.join(_TRADINGAGENTS_HOME, "logs")),
     "data_cache_dir": os.getenv("TRADINGAGENTS_CACHE_DIR", os.path.join(_TRADINGAGENTS_HOME, "cache")),
@@ -156,4 +192,4 @@ DEFAULT_CONFIG = _apply_env_overrides({
         ".SZ":  "399001.SZ",   # Shenzhen (SZSE Component)
         "":     "SPY",         # default for US-listed tickers (no suffix)
     },
-})
+}))

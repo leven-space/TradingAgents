@@ -10,7 +10,7 @@ name: tradingagents
 services:
   tradingagents:
     build: .
-    image: ${TRADINGAGENTS_IMAGE:-tradingagents:0.3.0}
+    image: ${TRADINGAGENTS_IMAGE:-tradingagents:0.3.2}
     env_file:
       - .env
     environment:
@@ -26,8 +26,8 @@ services:
 
   tradingagents-mcp:
     build: .
-    image: ${TRADINGAGENTS_IMAGE:-tradingagents:0.3.0}
-    entrypoint: ["tradingagents-mcp"]
+    image: ${TRADINGAGENTS_IMAGE:-tradingagents:0.3.2}
+    command: ["tradingagents-mcp"]
     env_file:
       - .env
     environment:
@@ -54,7 +54,7 @@ services:
 
   tradingagents-ollama:
     build: .
-    image: ${TRADINGAGENTS_IMAGE:-tradingagents:0.3.0}
+    image: ${TRADINGAGENTS_IMAGE:-tradingagents:0.3.2}
     env_file:
       - .env
     environment:
