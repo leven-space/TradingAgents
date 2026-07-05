@@ -134,6 +134,13 @@ For local models with Ollama:
 docker compose --profile ollama run --rm tradingagents-ollama
 ```
 
+**绿联 NAS 离线部署**（Mac 构建镜像 → 导出 tar → NAS 导入）：见 [docs/DEPLOY-NAS.md](docs/DEPLOY-NAS.md)。
+
+Build and export image on macOS (Apple Container or Docker):
+```bash
+./scripts/docker-build-export.sh 0.3.0 linux/amd64
+```
+
 ### Required APIs
 
 TradingAgents supports multiple LLM providers. Set the API key for your chosen provider:

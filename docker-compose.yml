@@ -1,12 +1,49 @@
+# 本地开发：从源码构建并运行（需 Docker / Docker Compose）
+#
+#   cp .env.example .env
+#   docker compose run --rm tradingagents
+#
+# NAS 离线部署请使用 docker-compose.nas.yml，详见 docs/DEPLOY-NAS.md
+
+name: tradingagents
+
 services:
   tradingagents:
     build: .
+    image: ${TRADINGAGENTS_IMAGE:-tradingagents:0.3.0}
     env_file:
       - .env
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      TRADINGAGENTS_CACHE_DIR: ${TRADINGAGENTS_CACHE_DIR:-/home/appuser/.tradingagents/cache}
+      TRADINGAGENTS_RESULTS_DIR: ${TRADINGAGENTS_RESULTS_DIR:-/home/appuser/.tradingagents/logs}
+      TRADINGAGENTS_MEMORY_LOG_PATH: ${TRADINGAGENTS_MEMORY_LOG_PATH:-/home/appuser/.tradingagents/memory/trading_memory.md}
     volumes:
-      - tradingagents_data:/home/appuser/.tradingagents
+      - ${TRADINGAGENTS_DATA_DIR:-tradingagents_data}:/home/appuser/.tradingagents
+    working_dir: /home/appuser/app
     tty: true
     stdin_open: true
+
+  tradingagents-mcp:
+    build: .
+    image: ${TRADINGAGENTS_IMAGE:-tradingagents:0.3.0}
+    entrypoint: ["tradingagents-mcp"]
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      TRADINGAGENTS_MCP_HOST: "0.0.0.0"
+      TRADINGAGENTS_MCP_PORT: "8080"
+      TRADINGAGENTS_CACHE_DIR: ${TRADINGAGENTS_CACHE_DIR:-/home/appuser/.tradingagents/cache}
+      TRADINGAGENTS_RESULTS_DIR: ${TRADINGAGENTS_RESULTS_DIR:-/home/appuser/.tradingagents/logs}
+      TRADINGAGENTS_MEMORY_LOG_PATH: ${TRADINGAGENTS_MEMORY_LOG_PATH:-/home/appuser/.tradingagents/memory/trading_memory.md}
+    volumes:
+      - ${TRADINGAGENTS_DATA_DIR:-tradingagents_data}:/home/appuser/.tradingagents
+    working_dir: /home/appuser/app
+    ports:
+      - "${TRADINGAGENTS_MCP_PORT:-8080}:8080"
+    profiles:
+      - mcp
 
   ollama:
     image: ollama/ollama:latest
@@ -17,13 +54,19 @@ services:
 
   tradingagents-ollama:
     build: .
+    image: ${TRADINGAGENTS_IMAGE:-tradingagents:0.3.0}
     env_file:
       - .env
     environment:
-      - TRADINGAGENTS_LLM_PROVIDER=ollama
-      - OLLAMA_BASE_URL=http://ollama:11434/v1
+      TZ: ${TZ:-Asia/Shanghai}
+      TRADINGAGENTS_LLM_PROVIDER: ollama
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434/v1}
+      TRADINGAGENTS_CACHE_DIR: ${TRADINGAGENTS_CACHE_DIR:-/home/appuser/.tradingagents/cache}
+      TRADINGAGENTS_RESULTS_DIR: ${TRADINGAGENTS_RESULTS_DIR:-/home/appuser/.tradingagents/logs}
+      TRADINGAGENTS_MEMORY_LOG_PATH: ${TRADINGAGENTS_MEMORY_LOG_PATH:-/home/appuser/.tradingagents/memory/trading_memory.md}
     volumes:
-      - tradingagents_data:/home/appuser/.tradingagents
+      - ${TRADINGAGENTS_DATA_DIR:-tradingagents_data}:/home/appuser/.tradingagents
+    working_dir: /home/appuser/app
     depends_on:
       - ollama
     tty: true

@@ -1,0 +1,59 @@
+# 绿联 NAS / 离线镜像部署用 Compose 文件
+#
+# 部署目录：/volume1/docker/trading-agents
+#
+# 首次部署：
+#   cd /volume1/docker/trading-agents
+#   cp .env.example .env
+#   mkdir -p data/{cache,logs,memory}
+#   chown -R 1000:10 data
+#   docker load -i tradingagents-0.3.0-linux-arm64-docker.tar
+#   docker compose -f docker-compose.nas.yml run --rm tradingagents
+
+name: trading-agents
+
+services:
+  tradingagents:
+    image: tradingagents:0.3.0
+    container_name: trading-agents
+    user: "1000:10"
+    env_file:
+      - .env
+    environment:
+      PUID: "1000"
+      PGID: "10"
+      TZ: Asia/Shanghai
+      TRADINGAGENTS_CACHE_DIR: /home/appuser/.tradingagents/cache
+      TRADINGAGENTS_RESULTS_DIR: /home/appuser/.tradingagents/logs
+      TRADINGAGENTS_MEMORY_LOG_PATH: /home/appuser/.tradingagents/memory/trading_memory.md
+    volumes:
+      - /volume1/docker/trading-agents/data:/home/appuser/.tradingagents
+    working_dir: /home/appuser/app
+    tty: true
+    stdin_open: true
+    init: true
+
+  # MCP 服务：供 OpenClaw 等 MCP 客户端调用（Streamable HTTP）
+  tradingagents-mcp:
+    image: tradingagents:0.3.0
+    container_name: tradingagents-mcp
+    user: "1000:10"
+    entrypoint: ["tradingagents-mcp"]
+    env_file:
+      - .env
+    environment:
+      PUID: "1000"
+      PGID: "10"
+      TZ: Asia/Shanghai
+      TRADINGAGENTS_MCP_HOST: "0.0.0.0"
+      TRADINGAGENTS_MCP_PORT: "8080"
+      TRADINGAGENTS_CACHE_DIR: /home/appuser/.tradingagents/cache
+      TRADINGAGENTS_RESULTS_DIR: /home/appuser/.tradingagents/logs
+      TRADINGAGENTS_MEMORY_LOG_PATH: /home/appuser/.tradingagents/memory/trading_memory.md
+    volumes:
+      - /volume1/docker/trading-agents/data:/home/appuser/.tradingagents
+    working_dir: /home/appuser/app
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    init: true
